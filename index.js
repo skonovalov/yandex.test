@@ -38,28 +38,35 @@ document.addEventListener("DOMContentLoaded", () => {
 let MyForm = {
 	validate() {
 		let isValid     = false;
-		let errorFields = []; //string
-		let form        = document.forms[0];
-		let name        = form.elements.fio;
-		let email       = form.elements.email;
-		let phone       = form.elements.phone;
+		let errorFields = [];
+		let data        = this.getData();
 
-		if (! utils.validateName(name)) {
-			errorFields.push(name);
-		}
+		for (let item in data) {
+			if (item === 'fio' && ! utils.validateName(data[item])) {
+				errorFields.push(item);
+			}
 
-		if (! utils.validateEmail(email)) {
-			errorFields.push(email);
+			if (item === 'email' && ! utils.validateEmail(data[item])) {
+				errorFields.push(item);
+			}
+
+			if (item === 'phone' && ! utils.validatePhone(data[item])) {
+				errorFields.push(item);
+			}
 		}
 
 		return {
-			isValid,
+			isValid: (errorFields.length === 0),
 			errorFields
 		};
 	},
 
 	getData() {
-
+		return {
+			fio  : document.querySelector('input[name="fio"]').value,
+			email: document.querySelector('input[name="email"]').value,
+			phone: document.querySelector('input[name="phone"]').value
+		};
 	},
 
 	setData(Object) {},
@@ -70,17 +77,33 @@ let MyForm = {
 };
 
 let utils = {
-	validateName(elem) {
-		return elem.value.split(' ').filter(Boolean).length === 3;
+	validateName(value) {
+		return value.split(' ').filter(Boolean).length === 3;
 	},
 
-	validateEmail(elem) {
+	validateEmail(value) {
 		let domains = ['ya.ru', 'yandex.ru', 'yandex.ua', 'yandex.by', 'yandex.kz', 'yandex.com'];
 
 		for (let item of domains) {
-			if (elem.value.indexOf(`@${item}`) !== -1) {
+			if (value.indexOf(`@${item}`) !== -1) {
 				return true;
 			}
 		}
+	},
+
+	validatePhone(value) {
+		let reg    = /\+7\([0-9]{3}\)[0-9]{3}-[0-9]{2}-[0-9]{2}/g;
+		let accept = reg.test(value);
+		let sum    = 0;
+
+		for (let digit of value) {
+			let val = parseInt(digit, 10);
+
+			if (val >= 0 && val <= 9 && typeof val === 'number') {
+				sum += val;
+			}
+		}
+
+		return accept && sum <= 30; 
 	}
 };
