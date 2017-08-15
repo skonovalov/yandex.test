@@ -1,29 +1,6 @@
-/*
+(function(){
 
-При отправке формы должна срабатывать валидация полей по следующим правилам:
-- ФИО: Ровно три слова.
-- Email: Формат email-адреса, но только в доменах ya.ru, yandex.ru, yandex.ua,
-yandex.by, yandex.kz, yandex.com.
-- Телефон: Номер телефона, который начинается на +7, и имеет формат +7(999)999-99-99.
-Кроме того, сумма всех цифр телефона не должна превышать 30. Например,
-для +7(111)222-33-11 сумма равняется 24, а для +7(222)444-55-66 сумма равняется 47.
-
-В глобальной области видимости должен быть определен объект MyForm с методами
-validate() => { isValid: Boolean, errorFields: String[] }
-getData() => Object
-setData(Object) => undefined
-submit() => undefined
-
-Метод validate возвращает объект с признаком результата валидации (isValid) и
-массивом названий полей, которые не прошли валидацию (errorFields).
-Метод getData возвращает объект с данными формы, где имена свойств
-совпадают с именами инпутов.
-Метод setData принимает объект с данными формы и устанавливает их инпутам формы.
-Поля кроме phone, fio, email игнорируются.
-Метод submit выполняет валидацию полей и отправку ajax-запроса, если валидация пройдена.
-Вызывается по клику на кнопку отправить.
-
-*/
+let result = document.querySelector('#resultContainer');
 
 document.addEventListener("DOMContentLoaded", () => {
 	let submitBtn = document.querySelector('#submitButton');
@@ -31,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	submitBtn.addEventListener('click', e => {
 		e.preventDefault();
 
-		console.log(MyForm.validate());
+		MyForm.submit();
 	});
 });
 
@@ -69,10 +46,23 @@ let MyForm = {
 		};
 	},
 
-	setData(Object) {},
+	setData(Object) {
+
+	},
 
 	submit(){
-		this.validate();
+		let validate = this.validate();
+
+		if (! validate.isValid) {
+			utils.sendRequest('error.json', utils.showStatus);
+			result.classList.add('error');
+
+			validate.errorFields.forEach((item) => {
+				document.querySelector(`input[name="${item}"]`).classList.add('error');
+			});
+		} else if (validate.isValid) {
+			utils.sendRequest('success.json', utils.showStatus);
+		}
 	}
 };
 
@@ -104,6 +94,27 @@ let utils = {
 			}
 		}
 
-		return accept && sum <= 30; 
+		return accept && sum <= 30;
+	},
+
+	showStatus(obj) {
+		let text = document.createTextNode(obj.reason);
+
+		result.appendChild(text);
+	},
+
+	sendRequest(url, callback) {
+		let xhr = new XMLHttpRequest();
+
+		xhr.open('GET', url);
+		xhr.send(null);
+
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4 && this.status === 200) {
+				callback(JSON.parse(this.responseText));
+			}
+		};
 	}
 };
+
+})();
