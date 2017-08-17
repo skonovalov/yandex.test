@@ -40,7 +40,7 @@ input:focus {
 	border-color: #ccc;
 }
 
-button {
+.btn {
 	padding: 14px 24px;
 	cursor: pointer;
 	background-color: #0073AA;
@@ -60,10 +60,16 @@ button {
 	outline: none;
 }
 
-button:hover {
+.btn:hover {
 	background-color: #FFF;
 	border-color: #0073AA;
 	color: #0073AA;
+}
+
+.btn[disabled] {
+	background-color: #0073AA;
+	color: #fff;
+	cursor: default;
 }
 
 input.error {

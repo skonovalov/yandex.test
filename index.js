@@ -1,14 +1,17 @@
 (function(){
 
 let result = document.querySelector('#resultContainer');
+let fio    = document.querySelector('input[name="fio"]');
+let email  = document.querySelector('input[name="email"]');
+let phone  = document.querySelector('input[name="phone"]');
+let submitBtn = document.querySelector('#submitButton');
+let timeout   = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
-	let submitBtn = document.querySelector('#submitButton');
-
-	submitBtn.addEventListener('click', e => {
+	submitBtn.addEventListener('click', function(e) {
 		e.preventDefault();
 
-		MyForm.submit();
+		MyForm.submit(this);
 	});
 });
 
@@ -39,30 +42,63 @@ let MyForm = {
 	},
 
 	getData() {
+
 		return {
-			fio  : document.querySelector('input[name="fio"]').value,
-			email: document.querySelector('input[name="email"]').value,
-			phone: document.querySelector('input[name="phone"]').value
+			fio  : fio.value,
+			email: email.value,
+			phone: phone.value
 		};
 	},
 
-	setData(Object) {
+	setData(obj) {
+		let array = obj.errorFields;
 
+		if (array.indexOf(`fio`) !== -1) {
+			fio.classList.add('error');
+		} else {
+			fio.classList.remove('error');
+		}
+
+		if (array.indexOf(`email`) !== -1) {
+			email.classList.add('error');
+		} else {
+			email.classList.remove('error');
+		}
+
+		if (array.indexOf(`phone`) !== -1) {
+			phone.classList.add('error');
+		} else {
+			phone.classList.remove('error');
+		}
 	},
 
-	submit(){
+	submit(elem){
 		let validate = this.validate();
+		let rand = getRandomInt(); console.log('1', rand);
 
 		if (! validate.isValid) {
 			utils.sendRequest('error.json', utils.showStatus);
-			result.classList.add('error');
 
-			validate.errorFields.forEach((item) => {
-				document.querySelector(`input[name="${item}"]`).classList.add('error');
-			});
-		} else if (validate.isValid) {
+			result.classList.add('error');
+			result.classList.remove('success');
+		} else if (validate.isValid) { //подумать над таймаутами
+			while(rand > 5) {
+				utils.sendRequest('progress.json', utils.setTimeout);
+
+				setTimeout(() => {
+					rand = getRandomInt();
+					console.log(rand);
+				}, timeout);
+			}
+
+			elem.setAttribute('disabled', 'disabled');
 			utils.sendRequest('success.json', utils.showStatus);
+
+			result.classList.add('success');
+			result.classList.remove('error');
 		}
+
+		this.setData(validate);
 	}
 };
 
@@ -100,7 +136,12 @@ let utils = {
 	showStatus(obj) {
 		let text = document.createTextNode(obj.reason);
 
+		result.innerText = '';
 		result.appendChild(text);
+	},
+
+	setTimeout(obj) {
+		timeout =  parseInt(obj.timeout, 10);
 	},
 
 	sendRequest(url, callback) {
@@ -116,5 +157,9 @@ let utils = {
 		};
 	}
 };
+
+function getRandomInt() {
+	return Math.floor(Math.random() * (10)) + 0;
+}
 
 })();
