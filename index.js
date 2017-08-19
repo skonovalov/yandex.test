@@ -5,13 +5,14 @@ let fio    = document.querySelector('input[name="fio"]');
 let email  = document.querySelector('input[name="email"]');
 let phone  = document.querySelector('input[name="phone"]');
 let submitBtn = document.querySelector('#submitButton');
+let timer     = null;
 let timeout   = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
 	submitBtn.addEventListener('click', function(e) {
 		e.preventDefault();
 
-		MyForm.submit(this);
+		MyForm.submit();
 	});
 });
 
@@ -74,28 +75,40 @@ let MyForm = {
 
 	submit(elem){
 		let validate = this.validate();
-		let rand = getRandomInt(); console.log('1', rand);
 
 		if (! validate.isValid) {
 			utils.sendRequest('error.json', utils.showStatus);
 
 			result.classList.add('error');
-			result.classList.remove('success');
-		} else if (validate.isValid) { //подумать над таймаутами
-			while(rand > 5) {
-				utils.sendRequest('progress.json', utils.setTimeout);
+			result.classList.remove('success', 'progress');
+		} else if (validate.isValid) {
+			utils.sendRequest('progress.json', utils.showStatus);
+			result.classList.add('progress');
 
-				setTimeout(() => {
-					rand = getRandomInt();
-					console.log(rand);
-				}, timeout);
-			}
+			timer = setInterval(() => {
+				rand = getRandomInt();
 
-			elem.setAttribute('disabled', 'disabled');
-			utils.sendRequest('success.json', utils.showStatus);
+				if (rand < 5) {
+					clearInterval(timer);
 
-			result.classList.add('success');
-			result.classList.remove('error');
+					submitBtn.disabled = true;
+
+					new Promise((resolve, reject) => {
+						utils.sendRequest('success.json', utils.showStatus);
+						resolve();
+					}).then(() => {
+						result.classList.add('success');
+						result.classList.remove('error', 'progress');
+
+						fio.value   = '';
+						email.value = '';
+						phone.value = '';
+
+						submitBtn.disabled = false;
+					});
+				}
+
+			}, timeout);
 		}
 
 		this.setData(validate);
@@ -138,10 +151,10 @@ let utils = {
 
 		result.innerText = '';
 		result.appendChild(text);
-	},
 
-	setTimeout(obj) {
-		timeout =  parseInt(obj.timeout, 10);
+		if (obj.timeout) {
+			timeout = parseInt(obj.timeout, 10);
+		}
 	},
 
 	sendRequest(url, callback) {

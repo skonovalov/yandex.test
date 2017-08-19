@@ -87,3 +87,7 @@ input.error {
 .resultContainer.error {
 	color: red;
 }
+
+.resultContainer.progress {
+	color: #ffc107;
+}
